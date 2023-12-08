@@ -4,11 +4,6 @@
 (defn games [filepath]
   (str/split-lines (slurp filepath)))
 
-(defn rounds [game-string]
-  (str/split game-string #":"))
-
-(map rounds (games "data/2-test.txt"))
-
 (defn parse-block-color [block-string]
   [(cond
      (str/ends-with? block-string "blue") :blue
@@ -58,22 +53,14 @@
                merge-with conj
                {:red [] :green [] :blue []}
                rounds)]
-    (map (fn [[key items]] {key (apply max items)}) pivot)))
-
-
-
-(map
- (fn [[_ rounds]] (vals (max-count-per-block rounds)))
- (parsed-games "data/2-test.txt"))
-
-(parsed-games "data/2-test.txt")
+    (map (fn [[items]] (apply max items)) pivot)))
 
 (defn part2 [filename]
   (let [maxes-per-game (map
                         (fn [[_ rounds]] (max-count-per-block rounds))
-                        (parsed-games filename))]
-    (conj maxes-per-game)))
+                        (parsed-games filename))
+        power (map #(reduce * %) maxes-per-game)]
+    (reduce + power)))
 
-(part2 "data/2-test.txt")
-
-(conj {:red 4} {:green 2} {:blue 6})
+(part2 "data/2-test.txt"); 2286
+(part2 "data/2-data.txt"); 67953
