@@ -61,8 +61,26 @@
         right (vector [line end])]
     (concat top-coords left right bottom-coords)))
 
+;; 467..114..
+;; ...*......
+;; ..35..633.
+;; ......#...
+;; 617*......
+;; .....+.58.
+;; ..592.....
+;; ......755.
+;; ...$.*....
+;; .664.598..
+
+;; 0|012345
+;; 1|012345
+;; 2|012345
+;; 3|012345
+;; 4|012*45
+;; 5|012345
+
 (edge-coords [4 0 3])
-(edge-coords [4 0])
+(edge-coords [4 3])
 
 (apply concat (map-indexed parse-serials-line (lines "data/3-test.txt")))
 
@@ -93,15 +111,23 @@
 (defn parse-gears-line [number line]
   (parse-line gear-ratios number line))
 
+(apply concat (map-indexed parse-gears-line (lines "data/3-test.txt")))
+
 (defn has-start-or-end [[digit-line digit-start digit-end] gear-coord]
-  (or (= gear-coord [digit-line digit-start]) (= gear-coord [digit-line digit-end])))
+  (or (= gear-coord [digit-line digit-start]) (= gear-coord [digit-line (dec digit-end)])))
 
 (has-start-or-end [1 2 3] [1 2])
 (has-start-or-end [1 2 3] [1 3])
 (has-start-or-end [1 2 3] [2 3])
+(has-start-or-end [0 0 3] [0 3])
 
-(defn touches-digits [coord digits]
-  (filter #(has-start-or-end % coord) digits))
+(defn contains-serial? [edge-coords [_ serial-coords]]
+  (some #(has-start-or-end serial-coords %) edge-coords))
+
+(contains-serial? [[0 1] [0 2] [0 3]] [58 [0 0 3]])
+
+(defn touching-digits [edge-coords serials]
+  (filter #(contains-serial? edge-coords %) serials))
 
 
 (defn part2 [filename]
@@ -109,9 +135,10 @@
         digits (map clean-digit (filter-nested data :D))
         gear-coords (map clean-symbol (filter-nested data :S))
         gear-edges (map edge-coords gear-coords)
-        ;serial-numbers (filter (fn [[_ coords]] (has-overlap? (edge-coords coords) symbol-coords)) digits)
-        ;raw-serials (map first serial-numbers)
-        ]
-    [gear-edges]))
+        gear-adjacent-serials (map #(touching-digits % digits) gear-edges)
+        pairs (filter #(= 2 (count %)) gear-adjacent-serials)
+        products (map (fn [[[lhs _] [rhs _]]] (* lhs rhs)) pairs)]
+    (reduce + products)))
 
-(part2 "data/3-test.txt");
+(part2 "data/3-test.txt") ; => 467835
+(part2 "data/3-data.txt") ; => 69527306
